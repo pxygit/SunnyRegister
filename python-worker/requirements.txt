@@ -8,7 +8,7 @@ pproxy>=2.7,<3.0
 curl-cffi>=0.16.0,<1.0
 Flask>=3.0,<4
 gunicorn>=26.0.0,<27
-cryptography>=50.0.0,<51.0
+cryptography>=50.0.1,<51.0
 tls-client==1.0.1
 playwright==1.60.0
 camoufox[geoip]==0.5.4
