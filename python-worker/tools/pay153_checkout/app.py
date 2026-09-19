@@ -59,7 +59,7 @@ from payment_proof_contracts import (
     render_payment_diagnostic_event,
     sentinel_flow,
 )
-from upi_go_runner import available as upi_go_available, run_upi as run_upi_go
+from upi_local_extractor import generate_upi_payment_link
 from ph_short_extractor import (
     CheckoutExtractor as PhShortCheckoutExtractor,
     ExtractorConfig as PhShortExtractorConfig,
@@ -5160,7 +5160,7 @@ class JobStore:
         if options.get("link_type") == "paypal":
             mode_label = {"oaics": "OAICS", "cs_live": "CS Live"}.get(paypal_mode, "自动识别")
             self.log(job_id, f"PayPal Checkout 类型：{mode_label}；将使用对应提链流程")
-        if rust_execute and rust_base and options.get("link_type") in {"paypal", "pix", "upi", "ideal"} and not (
+        if rust_execute and rust_base and options.get("link_type") in {"paypal", "pix", "ideal"} and not (
             options.get("link_type") == "paypal" and options.get("oaics_paypal")
         ):
             return self._run_rust_workflow(job_id, options, rust_base)
@@ -5448,57 +5448,66 @@ class JobStore:
                     self.log(job_id, f"优惠预检已匹配账号活动：{detected_campaign}")
                 self.ensure_not_cancelled(job_id)
 
-            if (
-                provider == "upi"
-                and promo_requested
-                and options.get("local_method_strategy") == "go_b"
-                and not options.get("named_proxy_pools")
-            ):
-                if not upi_go_available():
-                    raise RuntimeError("UPI Go Elements/B 引擎未安装")
-                self.update(job_id, percent=22, text="UPI Go：准备印度账单与代理路由")
+            if provider == "upi":
+                self.update(job_id, percent=22, text="准备 UPI 0810 Sentinel 提链流程")
                 upi_billing = default_billing("IN", meta.get("email") or "")
                 upi_address = upi_billing.get("address") or {}
                 self.log(
                     job_id,
-                    "UPI Go 账单：城市={}，州={}，邮编={}".format(
+                    "UPI 印度账单：城市={}，州={}，邮编={}".format(
                         upi_address.get("city") or "-",
                         upi_address.get("state") or "-",
                         upi_address.get("postal_code") or "-",
                     ),
                 )
-                self.update(job_id, percent=34, text="UPI Go：创建零元 Checkout")
-                go_result = run_upi_go(
-                    token=token,
-                    proxy=exit_proxy,
+                self.log(
+                    job_id,
+                    "UPI 新链路：Checkout、Stripe 与 approval 使用 Checkout代理池；"
+                    + ("Promotion代理池已完成优惠资格预检" if promo_requested else "优惠已关闭，不校验资格且不限制金额为 0"),
+                )
+                upi_result = generate_upi_payment_link(
+                    access_token=token,
+                    checkout_proxy=exit_proxy,
+                    provider_proxy=exit_proxy,
                     billing=upi_billing,
-                    promotion_country=str(os.getenv("PAY153_UPI_GO_PROMO_COUNTRY") or "VN"),
-                    timeout_seconds=int(os.getenv("PAY153_UPI_GO_REQUEST_TIMEOUT", "45") or 45),
-                    cancelled=lambda: self.cancelled(job_id),
+                    apply_promo=promo_requested,
+                    promo_campaign=str(options.get("promo_campaign") or "plus-1-month-free"),
                     log=lambda message: self.log(job_id, message),
+                    cancel_check=lambda: self.ensure_not_cancelled(job_id),
                 )
                 self.ensure_not_cancelled(job_id)
+                payment_link = str(upi_result.get("checkout_url") or "")
+                qr_images = generate_payment_qr_images(
+                    payment_link, lambda message: self.log(job_id, message)
+                )
                 result: dict[str, Any] = {
                     "plan": options["plan"],
-                    "link_type": "upi",
                     "account_email": meta.get("email") or "",
                     "account_id": meta.get("account_id") or "",
                     "country": "IN",
-                    "currency": str(go_result.get("checkout_currency") or "INR").upper(),
+                    "currency": "INR",
                     "checkout_country": "IN",
-                    "checkout_currency": str(go_result.get("checkout_currency") or "INR").upper(),
+                    "checkout_currency": "INR",
                     "entry_proxy_pool_size": len(entry_pool),
                     "exit_proxy_pool_size": len(exit_pool),
-                    "proxy_mode": "go_region_route",
-                    "promo_requested": True,
-                    "promo_applied": go_result.get("promo_applied"),
-                    "promo_campaign_used": options.get("promo_campaign") or "plus-1-month-free",
+                    "proxy_mode": "named_checkout_promotion" if options.get("named_proxy_pools") else "dual_chain",
+                    "promo_requested": promo_requested,
+                    "promo_campaign_used": (
+                        options.get("promo_campaign") or "plus-1-month-free"
+                    ) if promo_requested else "",
                     "entry_trial_eligible": preflight.get("one_click_trial_eligible"),
                     "entry_country": str(main_country or "").upper(),
                     "payment_proxy_country": str(payment_country or "").upper(),
                 }
-                result.update(go_result)
-                self.update(job_id, percent=100, text="UPI 提取完成", status="done", result=result)
+                result.update(upi_result)
+                result.update(qr_images)
+                self.update(
+                    job_id,
+                    percent=100,
+                    text="UPI 支付链接提取完成",
+                    status="done",
+                    result=result,
+                )
                 return
 
             self.update(job_id, percent=18, text="生成 Sentinel 校验")

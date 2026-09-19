@@ -13,3 +13,6 @@ Dockerfile text eol=lf
 *.json text eol=lf
 *.md text eol=lf
 *.ps1 text eol=crlf
+
+# Vendored Sentinel assets are hash-pinned and must retain their exact bytes.
+python-worker/tools/pay153_checkout/upi_sentinel_0810/runtime/*.js -text whitespace=cr-at-eol
