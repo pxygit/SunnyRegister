@@ -601,6 +601,14 @@ def _log_proxy_startup(db: SunnyDB, payload: dict[str, Any]) -> None:
     invalid = int(stats.get("invalid") or 0)
     if payload.get("proxy_enabled") is False:
         system_proxy = _proxy_snapshot(payload).get("register", "")
+        if payload.get("proxy_pool_fallback_confirmed") is True:
+            db.event(
+                f"[代理] 当前代理池未配置可用的注册/登录用途代理；用户已确认本次任务改用服务器系统出口"
+                f"{'代理：' + system_proxy if system_proxy else '直连'}。代理池总数 {total}，启用 {enabled}，停用 {disabled}，失效 {invalid}",
+                "warning",
+                detail={"scope": "global", "proxy_enabled": False, "proxy_pool_fallback_confirmed": True, "proxy_stats": stats, "system_proxy": system_proxy},
+            )
+            return
         db.event(
             f"[代理] 代理池开关：关闭；注册机将使用服务器系统出口{'代理：' + system_proxy if system_proxy else '直连'}。代理池总数 {total}，启用 {enabled}，停用 {disabled}，失效 {invalid}",
             detail={"scope": "global", "proxy_enabled": False, "proxy_stats": stats, "system_proxy": system_proxy},

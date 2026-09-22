@@ -3529,6 +3529,10 @@ func (s *Server) sunnyListAccounts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) sunnyProxyConfig(w http.ResponseWriter, r *http.Request, parts []string) {
+	if len(parts) == 1 && parts[0] == "register-readiness" && r.Method == http.MethodGet {
+		writeJSON(w, http.StatusOK, s.sunnyRegisterProxyReadiness())
+		return
+	}
 	if len(parts) == 0 && r.Method == http.MethodGet {
 		writeJSON(w, 200, s.sunnyGetConfig(sunnyCfgProxy, defaultProxyConfig()))
 		return
@@ -5737,7 +5741,7 @@ func (s *Server) sunnyTasks(w http.ResponseWriter, r *http.Request, parts []stri
 				return
 			}
 		} else if identity == "domain" || identity == "domain_mailbox" || identity == "自建域名邮箱" {
-			if err := s.sunnyValidateProxyForRegisterTask(); err != nil {
+			if err := s.sunnyValidateProxyForRegisterTask(boolValue(body["allow_system_proxy_fallback"], false)); err != nil {
 				writeError(w, http.StatusBadRequest, err.Error())
 				return
 			}
@@ -5877,7 +5881,7 @@ func sunnyMailboxListSortClause(sortBy string, sortOrder string) string {
 func (s *Server) sunnyValidateRegisterStageResources(body map[string]any) error {
 	identity := strings.ToLower(strings.TrimSpace(text(body["identity"])))
 	if identity == "remail" || identity == "domain" || identity == "domain_mailbox" || identity == "自建域名邮箱" {
-		return s.sunnyValidateProxyForRegisterTask()
+		return s.sunnyValidateProxyForRegisterTask(boolValue(body["allow_system_proxy_fallback"], false))
 	}
 	mailboxCfg := s.sunnyGetConfig(sunnyCfgMailbox, defaultMailboxConfig())
 	if !boolValue(mailboxCfg["pool_enabled"], true) {
@@ -5890,7 +5894,7 @@ func (s *Server) sunnyValidateRegisterStageResources(body map[string]any) error 
 	if len(mailboxes) == 0 {
 		return fmt.Errorf("mailbox config is unavailable: import and enable at least one mailbox first")
 	}
-	if err := s.sunnyValidateProxyForRegisterTask(); err != nil {
+	if err := s.sunnyValidateProxyForRegisterTask(boolValue(body["allow_system_proxy_fallback"], false)); err != nil {
 		return err
 	}
 	// SMS and sub2api are post-registration stages. Missing resources must not
@@ -5899,24 +5903,33 @@ func (s *Server) sunnyValidateRegisterStageResources(body map[string]any) error 
 	return nil
 }
 
-func (s *Server) sunnyValidateProxyForRegisterTask() error {
+func (s *Server) sunnyRegisterProxyReadiness() map[string]any {
 	cfg := s.sunnyGetConfig(sunnyCfgProxy, defaultProxyConfig())
-	if !boolValue(cfg["proxy_enabled"], true) {
-		return nil
-	}
-	if normalizeSunnyProxyAddress(text(cfg["register_proxy"])) != "" {
-		return nil
-	}
+	proxyEnabled := boolValue(cfg["proxy_enabled"], true)
+	explicitProxy := normalizeSunnyProxyAddress(text(cfg["register_proxy"]))
 	var n int64
 	s.db.Model(&SunnyProxy{}).
 		Where("status = ? AND enabled = ? AND last_check_ok = ?", "enabled", true, true).
 		Where("(',' || replace(lower(coalesce(purpose_tags, '')), ' ', '') || ',') LIKE ?", "%,"+sunnyProxyPurposeRegister+",%").
 		Count(&n)
-	if n <= 0 {
-		stats := s.sunnyProxyStats()
-		return fmt.Errorf("proxy config is enabled but no checked usable proxy is available: total=%d enabled=%d disabled=%d invalid=%d", stats["total"], stats["enabled"], stats["disabled"], stats["invalid"])
+	usable := !proxyEnabled || explicitProxy != "" || n > 0
+	return map[string]any{
+		"proxy_enabled":               proxyEnabled,
+		"usable":                      usable,
+		"requires_confirmation":       proxyEnabled && !usable,
+		"usable_register_proxies":     n,
+		"has_explicit_register_proxy": explicitProxy != "",
+		"stats":                       s.sunnyProxyStats(),
 	}
-	return nil
+}
+
+func (s *Server) sunnyValidateProxyForRegisterTask(allowSystemFallback bool) error {
+	readiness := s.sunnyRegisterProxyReadiness()
+	if boolValue(readiness["usable"], false) || allowSystemFallback {
+		return nil
+	}
+	stats, _ := readiness["stats"].(map[string]int64)
+	return fmt.Errorf("proxy config is enabled but no checked usable proxy is available: total=%d enabled=%d disabled=%d invalid=%d", stats["total"], stats["enabled"], stats["disabled"], stats["invalid"])
 }
 
 func (s *Server) sunnyMailboxesForRegisterTask(body map[string]any) ([]SunnyMailbox, error) {
@@ -6047,6 +6060,7 @@ func (s *Server) sunnyTaskProxySnapshot(payload map[string]any) map[string]any {
 	}
 	next["system_proxy"] = localProxy
 	registerProxy := normalizeSunnyProxyAddress(text(cfg["register_proxy"]))
+	explicitProxy := registerProxy
 	var proxies []SunnyProxy
 	s.db.Where("status = ? AND enabled = ? AND last_check_ok = ?", "enabled", true, true).
 		Where("(',' || replace(lower(coalesce(purpose_tags, '')), ' ', '') || ',') LIKE ?", "%,"+sunnyProxyPurposeRegister+",%").
@@ -6066,6 +6080,17 @@ func (s *Server) sunnyTaskProxySnapshot(payload map[string]any) map[string]any {
 		next["proxy_pool"] = proxyPool
 		next["proxy_ids"] = proxyIDs
 		next["proxy_pool_size"] = len(proxyPool)
+	}
+	if registerProxy == "" && len(proxyPool) == 0 && explicitProxy == "" && boolValue(payload["allow_system_proxy_fallback"], false) {
+		next["proxy_enabled"] = false
+		next["proxy_pool_fallback_confirmed"] = true
+		next["register_proxy"] = ""
+		next["proxy"] = ""
+		next["system_proxy"] = normalizeSunnyProxyAddress(text(cfg["system_proxy"]))
+		delete(next, "proxy_pool")
+		delete(next, "proxy_ids")
+		delete(next, "proxy_pool_size")
+		return next
 	}
 	next["local_proxy"] = localProxy
 	next["register_proxy"] = registerProxy

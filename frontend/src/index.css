@@ -1594,6 +1594,8 @@ button:not(:disabled):active { transform: translateY(0) scale(.985); }
 .sr-concurrency-input:focus { border-color:#2dd4bf; box-shadow:0 0 0 3px rgba(45,212,191,.18); }
 .sr-register-account-list { grid-column:1 / -1; max-height:82px; overflow:auto; border-top:1px solid #e5e7eb; padding-top:8px; color:#334155; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size:12px; line-height:1.7; }
 .sr-register-actions { margin-top:24px; display:flex; align-items:center; gap:14px; }
+.sr-register-actions > .confirm-bubble-wrap { flex:1; }
+.sr-register-actions > .confirm-bubble-wrap > button { width:100%; }
 .sr-register-cancel { height:48px; min-width:92px; border:1px solid #e5e7eb; border-radius:12px; padding:0 22px; color:#475569; background:#fff; font-size:16px; transition:all .18s ease; }
 .sr-register-cancel:hover { background:#f8fafc; border-color:#cbd5e1; }
 

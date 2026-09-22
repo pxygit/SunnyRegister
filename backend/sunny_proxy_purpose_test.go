@@ -68,6 +68,60 @@ func TestSunnyProxyEmptyPurposeIsPersistedAndExcludedFromTasks(t *testing.T) {
 	}
 }
 
+func TestSunnyRegisterProxyFallbackRequiresExplicitConfirmation(t *testing.T) {
+	s := newSunnySessionTestServer(t)
+	s.sunnySaveConfig(sunnyCfgProxy, mergeConfig(defaultProxyConfig(), map[string]any{"proxy_enabled": true}))
+	proxy := SunnyProxy{
+		Address: "http://commerce-only.example:8080", PurposeTags: sunnyProxyPurposeCommerce,
+		Status: "enabled", Enabled: true, LastCheckOK: true,
+	}
+	if err := s.db.Create(&proxy).Error; err != nil {
+		t.Fatalf("create proxy: %v", err)
+	}
+
+	readiness := s.sunnyRegisterProxyReadiness()
+	if !boolValue(readiness["requires_confirmation"], false) || boolValue(readiness["usable"], true) {
+		t.Fatalf("unexpected readiness: %#v", readiness)
+	}
+	if err := s.sunnyValidateProxyForRegisterTask(false); err == nil {
+		t.Fatal("registration without fallback confirmation should be rejected")
+	}
+	if err := s.sunnyValidateProxyForRegisterTask(true); err != nil {
+		t.Fatalf("confirmed system fallback rejected: %v", err)
+	}
+
+	snapshot := s.sunnyTaskProxySnapshot(map[string]any{"allow_system_proxy_fallback": true})
+	if boolValue(snapshot["proxy_enabled"], true) {
+		t.Fatalf("confirmed snapshot kept proxy pool enabled: %#v", snapshot)
+	}
+	if !boolValue(snapshot["proxy_pool_fallback_confirmed"], false) {
+		t.Fatalf("confirmed snapshot missing fallback marker: %#v", snapshot)
+	}
+	if text(snapshot["register_proxy"]) != "" || text(snapshot["proxy"]) != "" {
+		t.Fatalf("confirmed snapshot retained registration proxy: %#v", snapshot)
+	}
+}
+
+func TestSunnyRegisterProxyReadinessAcceptsEnabledRegisterProxy(t *testing.T) {
+	s := newSunnySessionTestServer(t)
+	s.sunnySaveConfig(sunnyCfgProxy, mergeConfig(defaultProxyConfig(), map[string]any{"proxy_enabled": true}))
+	proxy := SunnyProxy{
+		Address: "http://register-ready.example:8080", PurposeTags: sunnyProxyPurposeRegister,
+		Status: "enabled", Enabled: true, LastCheckOK: true,
+	}
+	if err := s.db.Create(&proxy).Error; err != nil {
+		t.Fatalf("create proxy: %v", err)
+	}
+
+	readiness := s.sunnyRegisterProxyReadiness()
+	if !boolValue(readiness["usable"], false) || boolValue(readiness["requires_confirmation"], true) {
+		t.Fatalf("unexpected readiness: %#v", readiness)
+	}
+	if err := s.sunnyValidateProxyForRegisterTask(false); err != nil {
+		t.Fatalf("enabled register proxy rejected: %v", err)
+	}
+}
+
 func TestSunnyProxyCreatePreservesExplicitEmptyPurpose(t *testing.T) {
 	s := newSunnySessionTestServer(t)
 	req := httptest.NewRequest(http.MethodPost, "/api/sunny/proxy-config/pool", strings.NewReader(`{
