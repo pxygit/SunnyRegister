@@ -763,6 +763,94 @@ func TestSunnyMailboxRenameSynchronizesLinkedRecords(t *testing.T) {
 	}
 }
 
+func TestSunnyMailboxRebindFieldsAreIndependentAndAPIAcceptsCustomCredentials(t *testing.T) {
+	tests := []struct {
+		name               string
+		body               map[string]any
+		wantRebindEmail    string
+		wantRebindAPI      string
+		wantMailboxType    string
+		wantMailboxChannel string
+		wantAccessKey      string
+	}{
+		{
+			name:            "email only",
+			body:            map[string]any{"rebind_email": "rebound@example.com"},
+			wantRebindEmail: "rebound@example.com", wantMailboxType: "microsoft", wantMailboxChannel: "outlook",
+		},
+		{
+			name:          "api only",
+			body:          map[string]any{"rebind_mailbox_api": "custom-provider::mailbox-token"},
+			wantRebindAPI: "custom-provider::mailbox-token", wantMailboxType: "microsoft", wantMailboxChannel: "outlook",
+		},
+		{
+			name:            "custom complete credential",
+			body:            map[string]any{"rebind_email": "rebound@example.com", "rebind_mailbox_api": "custom-provider::mailbox-token"},
+			wantRebindEmail: "rebound@example.com", wantRebindAPI: "custom-provider::mailbox-token",
+			wantMailboxType: "domain", wantMailboxChannel: "domain_api", wantAccessKey: "custom-provider::mailbox-token",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			s := newSunnySessionTestServer(t)
+			var mailbox SunnyMailbox
+			if err := s.db.Where("email = ?", "session@example.com").First(&mailbox).Error; err != nil {
+				t.Fatal(err)
+			}
+			body, _ := json.Marshal(test.body)
+			req := httptest.NewRequest(http.MethodPut, "/api/sunny/mailboxes/"+strconv.Itoa(int(mailbox.ID)), bytes.NewReader(body))
+			rec := httptest.NewRecorder()
+			s.sunnyMailboxes(rec, req, []string{strconv.Itoa(int(mailbox.ID))})
+			if rec.Code != http.StatusOK {
+				t.Fatalf("update status=%d body=%s", rec.Code, rec.Body.String())
+			}
+			if err := s.db.First(&mailbox, mailbox.ID).Error; err != nil {
+				t.Fatal(err)
+			}
+			if mailbox.RebindEmail != test.wantRebindEmail || mailbox.RebindMailboxAPI != test.wantRebindAPI ||
+				mailbox.MailboxType != test.wantMailboxType || mailbox.MailboxChannel != test.wantMailboxChannel || mailbox.AccessKey != test.wantAccessKey {
+				t.Fatalf("unexpected mailbox rebind state: %#v", mailbox)
+			}
+			var account SunnyAccount
+			if err := s.db.Where("mailbox_id = ?", mailbox.ID).First(&account).Error; err != nil {
+				t.Fatal(err)
+			}
+			if account.RebindEmail != test.wantRebindEmail || account.RebindMailboxAPI != test.wantRebindAPI {
+				t.Fatalf("account rebind fields were not synchronized: %#v", account)
+			}
+		})
+	}
+}
+
+func TestSunnySessionRebindAPIAllowsIndependentCustomValue(t *testing.T) {
+	s := newSunnySessionTestServer(t)
+	var session SunnySession
+	if err := s.db.Where("email = ?", "session@example.com").First(&session).Error; err != nil {
+		t.Fatal(err)
+	}
+	body, _ := json.Marshal(map[string]any{"rebind_mailbox_api": "opaque custom mailbox credential"})
+	req := httptest.NewRequest(http.MethodPut, "/api/sunny/sessions/"+strconv.Itoa(int(session.ID)), bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+	s.sunnySessions(rec, req, []string{strconv.Itoa(int(session.ID))})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("update status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var account SunnyAccount
+	if err := s.db.First(&account, session.AccountID).Error; err != nil {
+		t.Fatal(err)
+	}
+	var mailbox SunnyMailbox
+	if err := s.db.First(&mailbox, account.MailboxID).Error; err != nil {
+		t.Fatal(err)
+	}
+	if account.RebindEmail != "" || mailbox.RebindEmail != "" || account.RebindMailboxAPI != "opaque custom mailbox credential" || mailbox.RebindMailboxAPI != account.RebindMailboxAPI {
+		t.Fatalf("independent custom API was not saved: account=%#v mailbox=%#v", account, mailbox)
+	}
+	if mailbox.MailboxType != "microsoft" || mailbox.MailboxChannel != "outlook" {
+		t.Fatalf("partial rebind metadata changed the original mailbox provider: %#v", mailbox)
+	}
+}
+
 func TestSunnySessionRenameRejectsExistingEmail(t *testing.T) {
 	s := newSunnySessionTestServer(t)
 	if err := s.db.Create(&SunnyMailbox{Email: "other@example.com", Status: "未注册", Enabled: true}).Error; err != nil {

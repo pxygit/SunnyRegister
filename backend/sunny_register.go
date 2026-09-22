@@ -902,6 +902,8 @@ func (s *Server) sunnyMailboxes(w http.ResponseWriter, r *http.Request, parts []
 			originalEmail := m.Email
 			requestedEmail := ""
 			emailProvided := false
+			rebindEmailProvided := false
+			rebindAPIProvided := false
 			trialUpdated := false
 			mailboxType := normalizeSunnyMailboxType(fallback(text(body["mailbox_type"]), m.MailboxType))
 			mailboxChannel := normalizeSunnyMailboxChannel(mailboxType, fallback(text(body["mailbox_channel"]), m.MailboxChannel))
@@ -917,6 +919,7 @@ func (s *Server) sunnyMailboxes(w http.ResponseWriter, r *http.Request, parts []
 				emailProvided = true
 			}
 			if _, ok := body["rebind_email"]; ok {
+				rebindEmailProvided = true
 				value := strings.TrimSpace(text(body["rebind_email"]))
 				if value != "" {
 					normalized, err := normalizeSunnyEditableEmail(value)
@@ -929,17 +932,11 @@ func (s *Server) sunnyMailboxes(w http.ResponseWriter, r *http.Request, parts []
 				m.RebindEmail = value
 			}
 			if _, ok := body["rebind_mailbox_api"]; ok {
+				rebindAPIProvided = true
 				m.RebindMailboxAPI = strings.TrimSpace(text(body["rebind_mailbox_api"]))
 			}
-			if (m.RebindEmail == "") != (m.RebindMailboxAPI == "") {
-				writeError(w, http.StatusUnprocessableEntity, "换绑邮箱名和换绑邮箱 API 必须同时填写")
-				return
-			}
-			if m.RebindEmail != "" {
-				if err := validateDomainMailboxAccessKey(m.RebindMailboxAPI, m.RebindEmail); err != nil {
-					writeError(w, http.StatusUnprocessableEntity, err.Error())
-					return
-				}
+			completeRebindCredential := m.RebindEmail != "" && m.RebindMailboxAPI != ""
+			if completeRebindCredential {
 				mailboxType, mailboxChannel = "domain", "domain_api"
 				m.MailboxType, m.MailboxChannel = mailboxType, mailboxChannel
 				m.AccessKey = m.RebindMailboxAPI
@@ -947,7 +944,7 @@ func (s *Server) sunnyMailboxes(w http.ResponseWriter, r *http.Request, parts []
 			if _, ok := body["access_key"]; ok {
 				m.AccessKey = text(body["access_key"])
 			}
-			if m.RebindEmail != "" {
+			if completeRebindCredential {
 				m.AccessKey = m.RebindMailboxAPI
 			}
 			if _, ok := body["chatgpt_password"]; ok {
@@ -1036,9 +1033,11 @@ func (s *Server) sunnyMailboxes(w http.ResponseWriter, r *http.Request, parts []
 				if m.RebindMailboxAPI != "" {
 					m.AccessKey = m.RebindMailboxAPI
 				}
-				if err := validateDomainMailboxAccessKey(m.AccessKey, credentialEmail); err != nil {
-					writeError(w, http.StatusUnprocessableEntity, sunnyMailboxFormatHint(mailboxType, mailboxChannel))
-					return
+				if !completeRebindCredential {
+					if err := validateDomainMailboxAccessKey(m.AccessKey, credentialEmail); err != nil {
+						writeError(w, http.StatusUnprocessableEntity, sunnyMailboxFormatHint(mailboxType, mailboxChannel))
+						return
+					}
 				}
 				m.PickupTokenHash = domainMailboxTokenHashFromCredential(m.AccessKey, credentialEmail)
 				m.Password, m.ClientID, m.RefreshToken = "", "", ""
@@ -1100,12 +1099,14 @@ func (s *Server) sunnyMailboxes(w http.ResponseWriter, r *http.Request, parts []
 						return err
 					}
 				}
-				if m.RebindEmail != "" {
+				if rebindEmailProvided || rebindAPIProvided {
 					if err := tx.Model(&SunnyAccount{}).Where("mailbox_id = ?", m.ID).Updates(map[string]any{
 						"rebind_email": m.RebindEmail, "rebind_mailbox_api": m.RebindMailboxAPI,
 					}).Error; err != nil {
 						return err
 					}
+				}
+				if completeRebindCredential {
 					var linkedAccounts []SunnyAccount
 					if err := tx.Select("id").Where("mailbox_id = ?", m.ID).Find(&linkedAccounts).Error; err != nil {
 						return err
@@ -5353,16 +5354,7 @@ func (s *Server) sunnySessions(w http.ResponseWriter, r *http.Request, parts []s
 				rebindAPIProvided = true
 				rebindAPI = strings.TrimSpace(text(body["rebind_mailbox_api"]))
 			}
-			if (rebindEmailProvided || rebindAPIProvided) && ((rebindEmail == "") != (rebindAPI == "")) {
-				writeError(w, http.StatusUnprocessableEntity, "换绑邮箱名和换绑邮箱 API 必须同时填写或同时清空")
-				return
-			}
-			if rebindEmail != "" {
-				if err := validateDomainMailboxAccessKey(rebindAPI, rebindEmail); err != nil {
-					writeError(w, http.StatusUnprocessableEntity, err.Error())
-					return
-				}
-			}
+			completeRebindCredential := rebindEmail != "" && rebindAPI != ""
 			if sunnyEmailKey(originalEmail) != sunnyEmailKey(targetEmail) {
 				if err := sunnyEmailRenameConflict(s.db, targetEmail); err != nil {
 					if strings.Contains(err.Error(), "已被其他") {
@@ -5441,7 +5433,7 @@ func (s *Server) sunnySessions(w http.ResponseWriter, r *http.Request, parts []s
 				if rebindAPIProvided {
 					accountUpdates["rebind_mailbox_api"] = rebindAPI
 					mailboxUpdates["rebind_mailbox_api"] = rebindAPI
-					if rebindEmail != "" {
+					if completeRebindCredential {
 						mailboxUpdates["mailbox_type"] = "domain"
 						mailboxUpdates["mailbox_channel"] = "domain_api"
 						mailboxUpdates["access_key"] = rebindAPI
