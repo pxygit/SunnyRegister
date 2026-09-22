@@ -2427,6 +2427,10 @@ function MailboxEditModal({ t, mailbox, groups, onClose, onSaved, notify }: { t:
   const isApple = String(form.mailbox_type || "microsoft") === "apple";
   async function save() {
     const email = String(form.email || "").trim();
+    if (String(form.rebind_mailbox_api || "").trim() && !String(form.rebind_email || "").trim()) {
+      notify("fail", "填写换绑邮箱 API 前必须先填写换绑邮箱名");
+      return;
+    }
     const urlAPI = isApple && String(form.mailbox_channel || "") === "url_api";
     if (!email.includes("@") || ((isRemail || isDomain) ? !String(form.access_key || "").trim() : isApple ? (!urlAPI && !String(form.access_key || "").trim()) : (!String(form.client_id || "").trim() || !String(form.refresh_token || "").trim()))) {
       notify("fail", t.validationFailed);
@@ -4670,6 +4674,10 @@ function SessionEditModal({ t, item, groups, onClose, onSaved, notify }: { t: ty
   async function save() {
     if (loading) return;
     const email = String(form.email || "").trim();
+    if (String(form.rebind_mailbox_api || "").trim() && !String(form.rebind_email || "").trim()) {
+      notify("fail", "填写换绑邮箱 API 前必须先填写换绑邮箱名");
+      return;
+    }
     if (!email || !email.includes("@")) {
       notify("fail", t.validationFailed);
       return;

@@ -776,14 +776,15 @@ class SunnyDB:
         """Switch later operations to the replacement domain mailbox after rebind."""
         rebind_email = str(mailbox.get("rebind_email") or "").strip()
         rebind_api = str(mailbox.get("rebind_mailbox_api") or "").strip()
-        if not rebind_email or not rebind_api:
+        if not rebind_email:
             return mailbox
         mailbox["_original_email_for_auth"] = str(mailbox.get("email") or "").strip()
         mailbox["email"] = rebind_email
-        mailbox["access_key"] = rebind_api
-        mailbox["raw"] = f"{rebind_email}----{rebind_api}"
-        mailbox["mailbox_type"] = "domain"
-        mailbox["mailbox_channel"] = "domain_api"
+        if rebind_api:
+            mailbox["access_key"] = rebind_api
+            mailbox["raw"] = f"{rebind_email}----{rebind_api}"
+            mailbox["mailbox_type"] = "domain"
+            mailbox["mailbox_channel"] = "domain_api"
         return mailbox
 
     def fetch_accounts(self, ids: list[int] | None = None) -> list[dict[str, Any]]:

@@ -234,8 +234,8 @@ def _domain_mailbox(db: SunnyDB, log: Callable[[str], None]) -> tuple[str, str, 
 
 
 def _login_flow(account: MailAccount, proxy: str, log: Callable[[str], None], *, keep_session: bool, should_cancel: Callable[[], bool] | None = None) -> tuple[ProtocolRegistrationFlow, dict[str, Any]]:
-    if not account.has_login_secret:
-        log("[认证] 未检测到完整 LS，直接使用 Camoufox 邮箱验证码登录")
+    if not account.has_chatgpt_password:
+        log("[认证] 未检测到 ChatGPT 密码，直接使用 Camoufox 邮箱验证码登录")
         return _browser_mailbox_fallback(
             account,
             proxy,

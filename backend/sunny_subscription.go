@@ -313,8 +313,8 @@ func (s *Server) sunnySubscriptionCandidates(ids []uint) ([]sunnySubscriptionCan
 		candidate.AccessKey = mailbox.AccessKey
 		candidate.ClientID = mailbox.ClientID
 		candidate.RefreshToken = mailbox.RefreshToken
-		if strings.TrimSpace(mailbox.RebindEmail) != "" || strings.TrimSpace(mailbox.RebindMailboxAPI) != "" {
-			if strings.TrimSpace(mailbox.RebindEmail) == "" || strings.TrimSpace(mailbox.RebindMailboxAPI) == "" {
+		if strings.TrimSpace(mailbox.RebindMailboxAPI) != "" {
+			if strings.TrimSpace(mailbox.RebindEmail) == "" {
 				candidate.Error = "换绑邮箱凭证不完整"
 			} else {
 				candidate.MailEmail = strings.TrimSpace(mailbox.RebindEmail)

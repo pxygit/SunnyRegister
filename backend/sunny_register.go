@@ -935,6 +935,10 @@ func (s *Server) sunnyMailboxes(w http.ResponseWriter, r *http.Request, parts []
 				rebindAPIProvided = true
 				m.RebindMailboxAPI = strings.TrimSpace(text(body["rebind_mailbox_api"]))
 			}
+			if m.RebindMailboxAPI != "" && m.RebindEmail == "" {
+				writeError(w, http.StatusUnprocessableEntity, "填写换绑邮箱 API 前必须先填写换绑邮箱名")
+				return
+			}
 			completeRebindCredential := m.RebindEmail != "" && m.RebindMailboxAPI != ""
 			if completeRebindCredential {
 				mailboxType, mailboxChannel = "domain", "domain_api"
@@ -1799,17 +1803,12 @@ func (s *Server) sunnyLatestMail(w http.ResponseWriter, r *http.Request, m *Sunn
 	mailAccessKey := strings.TrimSpace(m.AccessKey)
 	rebindEmail := strings.TrimSpace(m.RebindEmail)
 	rebindAccessKey := strings.TrimSpace(m.RebindMailboxAPI)
-	hasRebindCredential := rebindEmail != "" || rebindAccessKey != ""
-	if hasRebindCredential {
-		if rebindEmail == "" || rebindAccessKey == "" {
-			writeError(w, http.StatusUnprocessableEntity, "换绑邮箱名和换绑邮箱 API 配置不完整")
-			return
-		}
+	if rebindAccessKey != "" {
 		mailEmail, mailAccessKey = rebindEmail, rebindAccessKey
 	}
 	var payload map[string]any
 	var err error
-	if hasRebindCredential {
+	if rebindAccessKey != "" {
 		payload, err = s.domainMailLatestMail(mailAccessKey, mailEmail, limit)
 	} else if normalizeSunnyMailboxType(m.MailboxType) == "remail" {
 		payload, err = remailLatestMail(mailAccessKey, mailEmail, limit)
@@ -5353,6 +5352,10 @@ func (s *Server) sunnySessions(w http.ResponseWriter, r *http.Request, parts []s
 			if _, ok := body["rebind_mailbox_api"]; ok {
 				rebindAPIProvided = true
 				rebindAPI = strings.TrimSpace(text(body["rebind_mailbox_api"]))
+			}
+			if rebindAPI != "" && rebindEmail == "" {
+				writeError(w, http.StatusUnprocessableEntity, "填写换绑邮箱 API 前必须先填写换绑邮箱名")
+				return
 			}
 			completeRebindCredential := rebindEmail != "" && rebindAPI != ""
 			if sunnyEmailKey(originalEmail) != sunnyEmailKey(targetEmail) {

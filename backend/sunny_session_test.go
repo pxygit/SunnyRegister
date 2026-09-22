@@ -781,7 +781,7 @@ func TestSunnyMailboxRebindFieldsAreIndependentAndAPIAcceptsCustomCredentials(t 
 		{
 			name:          "api only",
 			body:          map[string]any{"rebind_mailbox_api": "custom-provider::mailbox-token"},
-			wantRebindAPI: "custom-provider::mailbox-token", wantMailboxType: "microsoft", wantMailboxChannel: "outlook",
+			wantRebindAPI: "", wantMailboxType: "microsoft", wantMailboxChannel: "outlook",
 		},
 		{
 			name:            "custom complete credential",
@@ -801,6 +801,12 @@ func TestSunnyMailboxRebindFieldsAreIndependentAndAPIAcceptsCustomCredentials(t 
 			req := httptest.NewRequest(http.MethodPut, "/api/sunny/mailboxes/"+strconv.Itoa(int(mailbox.ID)), bytes.NewReader(body))
 			rec := httptest.NewRecorder()
 			s.sunnyMailboxes(rec, req, []string{strconv.Itoa(int(mailbox.ID))})
+			if test.name == "api only" {
+				if rec.Code != http.StatusUnprocessableEntity {
+					t.Fatalf("update status=%d body=%s", rec.Code, rec.Body.String())
+				}
+				return
+			}
 			if rec.Code != http.StatusOK {
 				t.Fatalf("update status=%d body=%s", rec.Code, rec.Body.String())
 			}
@@ -822,7 +828,7 @@ func TestSunnyMailboxRebindFieldsAreIndependentAndAPIAcceptsCustomCredentials(t 
 	}
 }
 
-func TestSunnySessionRebindAPIAllowsIndependentCustomValue(t *testing.T) {
+func TestSunnySessionRebindAPIRequiresEmail(t *testing.T) {
 	s := newSunnySessionTestServer(t)
 	var session SunnySession
 	if err := s.db.Where("email = ?", "session@example.com").First(&session).Error; err != nil {
@@ -832,22 +838,8 @@ func TestSunnySessionRebindAPIAllowsIndependentCustomValue(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPut, "/api/sunny/sessions/"+strconv.Itoa(int(session.ID)), bytes.NewReader(body))
 	rec := httptest.NewRecorder()
 	s.sunnySessions(rec, req, []string{strconv.Itoa(int(session.ID))})
-	if rec.Code != http.StatusOK {
+	if rec.Code != http.StatusUnprocessableEntity {
 		t.Fatalf("update status=%d body=%s", rec.Code, rec.Body.String())
-	}
-	var account SunnyAccount
-	if err := s.db.First(&account, session.AccountID).Error; err != nil {
-		t.Fatal(err)
-	}
-	var mailbox SunnyMailbox
-	if err := s.db.First(&mailbox, account.MailboxID).Error; err != nil {
-		t.Fatal(err)
-	}
-	if account.RebindEmail != "" || mailbox.RebindEmail != "" || account.RebindMailboxAPI != "opaque custom mailbox credential" || mailbox.RebindMailboxAPI != account.RebindMailboxAPI {
-		t.Fatalf("independent custom API was not saved: account=%#v mailbox=%#v", account, mailbox)
-	}
-	if mailbox.MailboxType != "microsoft" || mailbox.MailboxChannel != "outlook" {
-		t.Fatalf("partial rebind metadata changed the original mailbox provider: %#v", mailbox)
 	}
 }
 

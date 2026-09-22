@@ -313,6 +313,8 @@ def account_from_row(row: dict[str, Any]) -> MailAccount:
     account.mailbox_channel = "outlook"
     account.chatgpt_password = str(row.get("chat_gpt_password") or row.get("chatgpt_password") or "")
     account.totp_secret = str(row.get("totp_secret") or "").strip()
+    if str(row.get("rebind_email") or "").strip():
+        account.email = str(row.get("rebind_email")).strip()
     return account
 
 

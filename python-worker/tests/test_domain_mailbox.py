@@ -40,6 +40,26 @@ def test_rebound_mailbox_credentials_are_used_for_bulk_mailbox_selection():
     assert account.mailbox_type == "domain"
 
 
+def test_rebound_email_only_changes_login_identity_and_keeps_original_mailbox_credentials():
+    row = {
+        "email": "original@example.com",
+        "raw": "original@example.com----password----client-id----refresh-token",
+        "password": "password",
+        "client_id": "client-id",
+        "refresh_token": "refresh-token",
+        "mailbox_type": "microsoft",
+        "mailbox_channel": "outlook",
+        "rebind_email": "replacement@example.com",
+    }
+    effective = SunnyDB._apply_rebind_mailbox_credentials(row)
+    assert effective["email"] == "replacement@example.com"
+    assert effective.get("access_key", "") == ""
+    assert effective["mailbox_type"] == "microsoft"
+    account = account_from_row(effective)
+    assert account.email == "replacement@example.com"
+    assert account.client_id == "client-id"
+
+
 def test_account_from_row_supports_domain_credentials():
     account = account_from_row({
         "email": "user@example.com",
