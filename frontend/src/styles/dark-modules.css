@@ -1,0 +1,75 @@
+/* Dark-only corrections for operational modules. The light theme is intentionally untouched. */
+
+.dark .audit-page .audit-table th,
+.dark .audit-page .audit-table th:last-child {
+  background: var(--bg-elevated);
+  border-bottom-color: var(--border);
+  color: var(--text-secondary);
+}
+.dark .audit-page .audit-table tbody tr:hover,
+.dark .audit-page .audit-table tbody tr:hover td:last-child { background: var(--bg-hover); }
+.dark .audit-page .audit-table td:last-child { background: var(--bg-elevated); }
+.dark .audit-page .audit-selection button,
+.dark .audit-page .audit-icon-action,
+.dark .audit-page .audit-view,
+.dark .audit-page .audit-pagination button { color: var(--text-secondary); }
+.dark .audit-page .audit-delete {
+  color: #fda4af !important;
+  border-color: rgba(251, 113, 133, .42) !important;
+  background: rgba(159, 18, 50, .18) !important;
+}
+.dark .audit-page .audit-modal-mask,
+.dark .payment-management .gopay-modal-mask { background: rgba(1, 9, 13, .78); }
+.dark .audit-page .audit-modal pre {
+  color: var(--text-secondary);
+  background: var(--bg-input);
+  border-color: var(--border);
+}
+.dark .audit-page .audit-loading { background: rgba(7, 19, 24, .88); }
+
+.dark .payment-management .payment-method-tabs button > svg,
+.dark .payment-management .payment-method-tabs small { color: var(--text-muted); }
+.dark .payment-management .gopay-nav { background: var(--bg-elevated); }
+.dark .payment-management .gopay-table-wrap th {
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+}
+.dark .payment-management .gopay-table-wrap td { color: var(--text-secondary); }
+.dark .payment-management .gopay-table-wrap tbody tr:hover,
+.dark .payment-management .gopay-table-wrap tbody tr.selected { background: var(--bg-hover); }
+.dark .payment-management .gopay-modal-body,
+.dark .payment-management .gopay-detail { color: var(--text-secondary); }
+
+.dark .checkout-manager > section { color: var(--text-primary); }
+.dark .checkout-manager .checkout-filter-toolbar { background: var(--bg-pane); }
+.dark .checkout-manager .checkout-account-table th,
+.dark .checkout-manager .checkout-account-table th.checkout-sticky {
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border-color: var(--border);
+}
+.dark .checkout-manager .checkout-account-table td.checkout-sticky { background: var(--bg-card); }
+.dark .checkout-manager .checkout-account-table tbody tr:hover > td.checkout-sticky { background: var(--bg-hover); }
+.dark .checkout-manager .checkout-manager-muted,
+.dark .checkout-manager .text-slate-400,
+.dark .checkout-manager .text-slate-500 { color: var(--text-muted) !important; }
+.dark .checkout-manager .text-red-500,
+.dark .checkout-manager .text-red-600,
+.dark .checkout-manager .text-red-700 { color: #fda4af !important; }
+.dark .checkout-manager .text-emerald-600 { color: #6ee7b7 !important; }
+.dark .checkout-manager .checkout-dark-surface {
+  background: var(--bg-surface) !important;
+  color: var(--text-secondary);
+}
+.dark .checkout-manager [class*="bg-[var(--bg-main)]"] {
+  background: var(--bg-surface) !important;
+}
+.dark .checkout-manager [class*="bg-slate-100"][class*="animate-pulse"] {
+  background: var(--bg-pane) !important;
+}
+
+@media (max-width: 767px) {
+  .dark .checkout-manager .checkout-account-table .checkout-sticky {
+    background: transparent;
+  }
+}

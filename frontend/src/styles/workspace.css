@@ -2,6 +2,7 @@
 :root {
   color-scheme: dark;
   --bg-base: #0b1519;
+  --bg-main: #0b1519;
   --bg-shell: #101e23;
   --bg-surface: #112127;
   --bg-card: #14262c;
@@ -12,6 +13,7 @@
   --chip-bg: #1b3238;
   --border: #2a4148;
   --border-soft: #23383f;
+  --border-strong: rgba(52, 211, 153, .42);
   --text-primary: #e7f2ef;
   --text-secondary: #b4cac4;
   --text-muted: #8daaa3;
@@ -33,6 +35,7 @@
 :root.light {
   color-scheme: light;
   --bg-base: #f3f7f5;
+  --bg-main: #f3f7f5;
   --bg-shell: #fcfefd;
   --bg-surface: #f8fbfa;
   --bg-card: #ffffff;
@@ -43,6 +46,7 @@
   --chip-bg: #eef4f1;
   --border: #dce6e1;
   --border-soft: #e8eeeb;
+  --border-strong: #cbd5e1;
   --text-primary: #193a30;
   --text-secondary: #435f55;
   --text-muted: #60756d;
@@ -192,3 +196,86 @@ button, a, input, select, textarea, summary { -webkit-tap-highlight-color: trans
 @media (prefers-reduced-motion: reduce) {
   .app-nav-link, .round-tool { transition: none; }
 }
+
+/* Deep-theme corrections for the legacy workspace controls.  These selectors
+   are intentionally scoped to .dark so the established light theme remains
+   unchanged. */
+.dark .sunny-page .sr-link:not(.text-red-500) { color: #93c5fd; }
+.dark .sunny-page .sr-link:not(.text-red-500):hover:not(:disabled) { color: #bfdbfe; }
+.dark .sunny-page .sr-link.text-red-500 { color: #fca5a5; }
+
+.dark .sunny-page .sr-account-progress-heading,
+.dark .sunny-page .sr-account-progress-step,
+.dark .sunny-page .sr-progress-email-list { color: var(--text-secondary); }
+.dark .sunny-page .sr-account-progress-heading b,
+.dark .sunny-page .sr-account-progress-step b { color: var(--text-accent); }
+.dark .sunny-page .sr-progress-email-group summary { color: var(--text-secondary); }
+.dark .sunny-page .sr-progress-email-group summary b { color: #86efac; }
+.dark .sunny-page .sr-progress-email-group.danger summary b,
+.dark .sunny-page .sr-account-progress-step small { color: #fca5a5; }
+
+.dark .sunny-page .sr-mailbox-stat-card[data-tone="pending"] { --stat-color: #cbd5e1; }
+.dark .sunny-page .sr-mailbox-stat-card[data-tone="registered"] { --stat-color: #93c5fd; }
+.dark .sunny-page .sr-mailbox-stat-card[data-tone="phone"] { --stat-color: #86efac; }
+.dark .sunny-page .sr-mailbox-stat-card[data-tone="reversed"] { --stat-color: #67e8f9; }
+.dark .sunny-page .sr-mailbox-stat-card[data-tone="banned"] { --stat-color: #fca5a5; }
+.dark .sunny-page .sr-mailbox-stat-card[data-tone="verify"] { --stat-color: #fcd34d; }
+.dark .sunny-page .sr-mailbox-stat-card[data-tone="refreshing"] { --stat-color: #c4b5fd; }
+.dark .sunny-page .sr-mailbox-stat-card[data-tone="failed"] { --stat-color: #fda4af; }
+
+.dark .sunny-page .sr-switch-only.on {
+  background: linear-gradient(135deg, #10b981, #14b8a6);
+  border-color: rgba(94, 234, 212, .55);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, .18), 0 10px 24px rgba(20, 184, 166, .18);
+}
+.dark .sunny-page .sr-switch-only.on span { background: #ecfeff; }
+
+.dark .sunny-page .sr-mail-content { background: var(--bg-card); border-color: var(--border); }
+.dark .sunny-page .sr-mail-content pre { color: var(--text-primary); }
+.dark .sunny-page .sr-mail-tags span { background: rgba(20, 184, 166, .14); color: #99f6e4; }
+.dark .sunny-page .sr-url-api-browser-notice { border-color: rgba(251, 191, 36, .28); background: rgba(120, 53, 15, .28); color: #fde68a; }
+
+.dark .sunny-page .sr-payment-filter-action {
+  border-color: rgba(45, 212, 191, .28);
+  background: rgba(20, 184, 166, .14);
+  color: #99f6e4;
+}
+.dark .sunny-page .sr-payment-filter-action:hover { border-color: rgba(45, 212, 191, .5); background: rgba(20, 184, 166, .22); }
+.dark .sunny-page .sr-inline-result { border-color: rgba(45, 212, 191, .28); background: rgba(20, 184, 166, .14); color: #99f6e4; }
+
+/* Opaque sticky cells keep their text readable while the table scrolls. */
+.dark .sunny-page .sr-resizable-table :is(thead th, tbody tr > td):is(:first-child, :nth-child(2), :last-child),
+.dark .sunny-page .sr-sticky-leading-columns :is(thead th, tbody tr > td):is(:first-child, :nth-child(2)),
+.dark .sunny-page .sr-session-table :is(thead th, tbody tr > td):is(:first-child, :nth-child(2)) {
+  background: var(--bg-card);
+}
+.dark .sunny-page .sr-resizable-table tbody tr:hover > td:is(:first-child, :nth-child(2), :last-child),
+.dark .sunny-page .sr-sticky-leading-columns tbody tr:hover > td:is(:first-child, :nth-child(2)),
+.dark .sunny-page .sr-session-table tbody tr:hover > td:is(:first-child, :nth-child(2)) {
+  background: var(--bg-hover);
+}
+
+.dark .sunny-page .sr-custom-select-option.active { background: linear-gradient(135deg, #059669, #0891b2); color: #f0fdfa; }
+
+/* Utility labels used by the older mailbox/provider forms. */
+.dark .sunny-page :is(.text-slate-500, .text-slate-600) { color: var(--text-secondary) !important; }
+.dark .sunny-page :is(.sr-mailbox-provider-card, .sr-sms-provider-card) :is(.text-slate-500, .text-slate-600) { color: var(--text-secondary) !important; }
+.dark .sunny-page :is(.sr-mailbox-provider-card, .sr-sms-provider-card) .text-emerald-700 { color: #86efac !important; }
+.dark .sunny-page :is(.sr-mailbox-provider-card, .sr-sms-provider-card) button.bg-white\/80 {
+  background: var(--bg-input) !important;
+  border-color: var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+.dark .sunny-page :is(.sr-mailbox-provider-card, .sr-sms-provider-card) button.bg-white\/80:hover {
+  background: var(--bg-hover) !important;
+  border-color: var(--accent-edge) !important;
+  color: var(--text-primary) !important;
+}
+.dark .sunny-page .sr-sms-provider-card .bg-emerald-50\/70 {
+  background: rgba(20, 184, 166, .14) !important;
+  border-color: rgba(45, 212, 191, .28) !important;
+  color: var(--text-secondary) !important;
+}
+.dark .sunny-page .sr-register-actions label { color: var(--text-secondary); }
+.dark .sunny-page .sr-register-cancel { background: var(--bg-input); border-color: var(--border); color: var(--text-secondary); }
+.dark .sunny-page .sr-register-cancel:hover { background: var(--bg-hover); border-color: var(--accent-edge); }
