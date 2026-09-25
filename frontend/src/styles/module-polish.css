@@ -1,0 +1,268 @@
+/* Shared visual treatment for operational modules; no task behavior is changed. */
+.audit-page,
+.payment-management,
+.checkout-manager {
+  min-width: 0;
+  --module-success: #6ee7b7;
+  --module-warning: #fcd34d;
+  --module-danger: #fda4af;
+  --module-info: #7dd3fc;
+}
+
+.light :is(.audit-page, .payment-management, .checkout-manager) {
+  --module-success: #047857;
+  --module-warning: #92400e;
+  --module-danger: #be123c;
+  --module-info: #0369a1;
+}
+
+.audit-page .audit-heading,
+.payment-management .payment-heading {
+  padding: 8px 2px 6px;
+  gap: 24px;
+}
+
+.audit-page .audit-heading h1,
+.payment-management .payment-heading h1,
+.checkout-manager .checkout-heading h1 {
+  color: var(--text-primary);
+  font-size: clamp(24px, 2.2vw, 30px);
+  font-weight: 750;
+  letter-spacing: 0;
+  line-height: 1.3;
+}
+
+.audit-page .audit-heading p,
+.payment-management .payment-heading p {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.audit-page :is(.audit-retention, .audit-toolbar, .audit-stats > div, .audit-table-wrap),
+.payment-management :is(.gopay-workspace, .gopay-panel, .gopay-summary > div, .momo-toolbar, .direct-card-toolbar, .direct-card-runtime > div) {
+  border-color: var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-sm);
+}
+
+.audit-page .audit-stats > div,
+.payment-management .gopay-summary > div {
+  background: var(--bg-card);
+  gap: 12px;
+}
+
+.audit-page .audit-stats strong,
+.payment-management .gopay-summary strong {
+  color: var(--text-primary);
+  letter-spacing: -.04em;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.audit-page .audit-stats span {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.audit-page .audit-toolbar {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  padding: 20px;
+  gap: 16px 12px;
+}
+
+.audit-page .audit-search { max-width: none; }
+.audit-page .audit-filter-field { font-weight: 600; }
+.audit-page :is(.audit-selection-controls, .audit-actions-right) { flex-wrap: wrap; }
+.audit-page .audit-selection { height: auto; min-height: 38px; flex-wrap: wrap; padding-block: 7px; background: var(--accent-soft); color: var(--text-secondary); border-color: var(--accent-edge); }
+
+.audit-page .audit-table th,
+.audit-page .audit-table th:last-child {
+  background: var(--bg-elevated);
+  border-color: var(--border-soft);
+  color: var(--text-secondary);
+  font-weight: 650;
+}
+
+.audit-page .audit-table td:last-child { background: var(--bg-elevated); }
+.audit-page .audit-table tbody tr:hover,
+.audit-page .audit-table tbody tr:hover td:last-child { background: var(--bg-hover); }
+.audit-page .audit-table td b { font-weight: 600; }
+.audit-page .audit-result {
+  color: var(--module-success);
+  background: rgba(16, 185, 129, .12);
+  border: 1px solid rgba(16, 185, 129, .18);
+}
+.audit-page .audit-result:is(.failed, .error) {
+  color: var(--module-danger);
+  background: rgba(244, 63, 94, .10);
+  border-color: rgba(244, 63, 94, .18);
+}
+.audit-page .audit-result.warning {
+  color: var(--module-warning);
+  background: rgba(245, 158, 11, .12);
+  border-color: rgba(245, 158, 11, .2);
+}
+.audit-page .audit-pagination { gap: 12px; }
+.audit-page .audit-pagination > div { flex-wrap: wrap; }
+
+.payment-management .payment-method-tabs {
+  gap: 10px;
+  padding: 3px 2px 14px;
+  scrollbar-width: thin;
+}
+.payment-management .payment-method-tabs button {
+  min-height: 68px;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: var(--shadow-sm);
+  transition: background-color .16s ease, border-color .16s ease;
+}
+.payment-management .payment-method-tabs button:hover { border-color: var(--accent-edge); }
+.payment-management .payment-method-tabs button.active {
+  background: var(--accent-soft);
+  box-shadow: inset 0 -2px var(--accent);
+}
+.payment-management .payment-method-tabs small { font-size: 11px; font-weight: 500; letter-spacing: .04em; }
+.payment-management .gopay-nav { background: var(--bg-elevated); }
+.payment-management .gopay-nav button { border-radius: var(--radius-control); font-weight: 600; }
+.payment-management .gopay-nav button.active { box-shadow: var(--shadow-sm); }
+.payment-management .gopay-content { padding: 20px; }
+.payment-management .gopay-view { gap: 16px; }
+.payment-management .gopay-section-title h2 { font-size: 21px; font-weight: 700; letter-spacing: 0; }
+.payment-management .gopay-panel > header { min-height: 56px; padding: 12px 16px; }
+.payment-management .gopay-panel > header h3 { font-weight: 650; }
+.payment-management .gopay-quick-actions { gap: 10px; padding: 16px; }
+.payment-management .gopay-quick-actions button { border-radius: 12px; min-height: 82px; padding: 13px; }
+.payment-management .gopay-quick-actions strong { font-size: 13px; font-weight: 650; }
+.payment-management .gopay-quick-actions small { font-size: 11px; line-height: 1.6; }
+.payment-management .gopay-form { padding: 16px; gap: 16px; }
+.payment-management .gopay-form label { gap: 7px; font-size: 12px; font-weight: 600; }
+.payment-management :is(.gopay-form input, .gopay-form select) { height: 40px; }
+.payment-management :is(.gopay-form input, .gopay-form select, .gopay-form textarea, .gopay-search input, .gopay-otp-inline input) {
+  border-radius: var(--radius-control);
+  font-size: 13px;
+}
+.payment-management .gopay-form .gopay-check input { width: 16px; height: 16px; }
+.payment-management .gopay-table-wrap { scrollbar-width: thin; overscroll-behavior-inline: contain; }
+.payment-management .gopay-table-wrap table { font-size: 12px; }
+.payment-management .gopay-table-wrap th { height: 43px; font-size: 11px; font-weight: 650; background: var(--bg-elevated); }
+.payment-management .gopay-table-wrap td { height: 56px; }
+.payment-management .gopay-status { min-height: 25px; font-size: 11px; font-weight: 650; color: var(--text-secondary); background: var(--chip-bg); border-color: var(--border-soft); }
+.payment-management .gopay-status:is(.is-failed, .is-fraud_denied, .is-error, .is-expired) { color: var(--module-danger); background: rgba(244, 63, 94, .10); border-color: rgba(244, 63, 94, .18); }
+.payment-management .gopay-status:is(.is-queued, .is-pending, .is-waiting_otp, .is-awaiting_otp, .is-validating_otp, .is-awaiting_captcha, .is-interrupted_unknown, .is-unknown, .is-success_unreconciled) { color: var(--module-warning); background: rgba(245, 158, 11, .12); border-color: rgba(245, 158, 11, .2); }
+.payment-management .gopay-status.is-running { color: var(--module-info); background: rgba(56, 189, 248, .12); border-color: rgba(56, 189, 248, .18); }
+.payment-management .gopay-status:is(.is-success, .is-completed, .is-done, .is-registered, .is-already_registered, .is-available, .is-ready) { color: var(--module-success); background: rgba(16, 185, 129, .12); border-color: rgba(16, 185, 129, .18); }
+.payment-management .gopay-status:is(.is-idle, .is-missing, .is-cancelled, .is-cancelling) { color: var(--text-secondary); background: var(--chip-bg); }
+.payment-management .gopay-empty { min-height: 172px; gap: 8px; }
+.payment-management .gopay-empty > svg { width: 30px; height: 30px; }
+.payment-management .gopay-empty strong { font-size: 13px; font-weight: 600; }
+.payment-management .gopay-empty span { font-size: 12px; }
+.payment-management .gopay-warning { font-size: 12px; line-height: 1.65; }
+.payment-management .gopay-flow small { font-size: 11px; font-weight: 600; }
+.payment-management .gopay-logs li { font-size: 12px; line-height: 1.6; }
+.payment-management .momo-log-list > div:not(.momo-log-empty) { font-size: 12px; }
+.payment-management .gopay-field-foot { flex-wrap: wrap; }
+
+.checkout-manager > section,
+:is(.light, .dark) .checkout-manager > section {
+  border-color: var(--border) !important;
+  border-radius: var(--radius-card);
+  background: var(--bg-card) !important;
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+.checkout-manager .checkout-heading,
+:is(.light, .dark) .checkout-manager > .checkout-heading {
+  padding: 24px;
+  background: linear-gradient(110deg, var(--bg-elevated), var(--bg-card)) !important;
+}
+.checkout-manager > section > h2 { font-size: 15px; font-weight: 650; }
+.checkout-manager :is(input:not([type="checkbox"]), select, textarea) { border-radius: var(--radius-control); background-color: var(--bg-input); }
+.checkout-manager :is(input, select, textarea):focus-visible { outline: 2px solid var(--accent-strong); outline-offset: 2px; border-color: var(--accent-strong); }
+.checkout-manager textarea { line-height: 1.65; }
+.checkout-manager :is(.checkout-filter-toolbar, .checkout-filter-controls) { gap: 10px; }
+.checkout-manager .checkout-filter-toolbar { padding: 12px; border-radius: 12px; background: var(--bg-pane); }
+.checkout-manager .checkout-account-table-scroll { border: 1px solid var(--border-soft); border-radius: 12px; scrollbar-width: thin; }
+.checkout-manager .checkout-account-table-scroll th { color: var(--text-secondary); }
+.checkout-manager .checkout-account-table th.checkout-sticky { background: var(--bg-elevated); }
+.checkout-manager .checkout-account-table td.checkout-sticky { background: var(--bg-card); }
+.checkout-manager .checkout-account-table tbody tr:hover > td.checkout-sticky { background: var(--bg-hover); }
+.checkout-manager .checkout-toast { max-width: calc(100vw - 40px); overflow-wrap: anywhere; }
+
+.audit-page .audit-modal,
+.payment-management .gopay-modal {
+  border-radius: var(--radius-card);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-md);
+}
+.audit-page .audit-modal-mask,
+.payment-management .gopay-modal-mask { backdrop-filter: blur(5px); }
+.audit-page .audit-modal pre { background: var(--bg-input); }
+.audit-page .audit-modal header,
+.payment-management .gopay-modal > header { gap: 12px; }
+.audit-page .audit-modal header h2,
+.payment-management .gopay-modal > header h3 { min-width: 0; overflow-wrap: anywhere; }
+.audit-page .audit-toast,
+.payment-management .gopay-toast {
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 12px 16px;
+  border-radius: 12px;
+  color: var(--module-success);
+  background: var(--bg-elevated);
+  overflow-wrap: anywhere;
+  line-height: 1.6;
+}
+.audit-page .audit-toast.fail,
+.payment-management .gopay-toast.is-error { color: var(--module-danger); }
+.audit-page .audit-toast svg,
+.payment-management .gopay-toast svg { flex: none; }
+
+@media (max-width: 1200px) {
+  .checkout-manager .checkout-filter-toolbar { flex-wrap: wrap; }
+  .checkout-manager .checkout-filter-controls { flex-basis: 100%; }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .audit-page .audit-toast,
+  .payment-management .gopay-toast,
+  .checkout-manager .checkout-toast { top: 128px; }
+}
+
+@media (max-width: 767px) {
+  .audit-page .audit-toast,
+  .payment-management .gopay-toast,
+  .checkout-manager .checkout-toast { top: 120px; }
+  .checkout-manager .checkout-account-table .checkout-sticky { position: static; z-index: auto; box-shadow: none; }
+}
+
+@media (max-width: 760px) {
+  .payment-management .gopay-content { padding: 12px; }
+  .payment-management .gopay-summary > div { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .payment-management .gopay-summary span { font-size: 12px; }
+  .payment-management .gopay-flow small { display: block; font-size: 10px; }
+  .payment-management .gopay-panel > header { gap: 10px; }
+  .audit-page .audit-retention { width: auto; max-width: 100%; }
+  .audit-page .audit-stats > div { align-items: flex-start; flex-direction: column; padding: 16px; gap: 10px; }
+  .audit-page .audit-stats span { font-size: 12px; }
+  .checkout-manager > section { padding: 16px; }
+  .checkout-manager .checkout-filter-controls > :is(input, select, details) { flex: 1 1 160px; width: auto; min-width: 0; }
+  .checkout-manager .sr-selection-summary { flex-wrap: wrap; flex-shrink: 1; }
+}
+
+@media (max-width: 640px) {
+  .audit-page .audit-toolbar { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .audit-page .audit-search { grid-column: auto; }
+  .audit-page .audit-detail-grid { grid-template-columns: 90px minmax(0, 1fr); gap: 10px; padding: 18px; }
+  .audit-page .audit-modal-mask,
+  .payment-management .gopay-modal-mask { padding: 12px; }
+  .audit-page .audit-modal,
+  .payment-management .gopay-modal { max-height: calc(100dvh - 24px); }
+  .audit-page .audit-modal header,
+  .audit-page .audit-modal footer { padding-inline: 18px; }
+  .audit-page .audit-modal pre { margin-inline: 18px; padding: 12px; }
+  .payment-management .gopay-activity > div { grid-template-columns: 18px minmax(0, 1fr); }
+  .payment-management .gopay-activity .gopay-status { grid-column: 2; justify-self: start; }
+  .payment-management .gopay-field-foot { align-items: flex-start; flex-direction: column; }
+}

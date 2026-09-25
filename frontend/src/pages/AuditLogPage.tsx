@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmBubble } from "@/components/ui/confirm-bubble";
 import { apiDownload, apiFetch, cn, triggerBrowserDownload } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-context";
+import "@/styles/module-polish.css";
 
 type AuditFilters = Record<string, string>;
 type AuditRow = Record<string, any>;
@@ -284,12 +285,12 @@ export default function AuditLogPage() {
   }
 
   return <section className="audit-page">
-    {notice && <div className={cn("audit-toast", notice.type)}>{notice.type === "ok" ? <CheckCircle2/> : <X/>}<span>{notice.text}</span></div>}
+    {notice && <div className={cn("audit-toast", notice.type)} role={notice.type === "fail" ? "alert" : "status"}>{notice.type === "ok" ? <CheckCircle2/> : <X/>}<span>{notice.text}</span></div>}
     {exporting && <div className="audit-export-progress"><Loader2 className="animate-spin"/><b>{c.exportRunning}</b></div>}
     <div className="audit-heading"><div><h1>{c.title}</h1><p>{c.desc}</p></div><div className="audit-retention"><label><span>{c.retention}</span><select value={retention} onChange={(e)=>setRetention(Number(e.target.value))}>{[1,3,7,14,30].map((day)=><option key={day} value={day}>{day}</option>)}</select></label><Button disabled={retention===savedRetention} onClick={saveRetention}><Save/>{c.save}</Button></div></div>
     <div className="audit-stats">{[[c.total,stats.total],[c.today,stats.today],[c.failed,stats.failed],[c.system,stats.system]].map(([label,value])=><div key={String(label)}><span>{label}</span><strong>{Number(value||0).toLocaleString()}</strong></div>)}</div>
     <div className="audit-toolbar">
-      <div className="audit-search"><Search/><input value={filters.search} onChange={(e)=>updateFilter("search",e.target.value)} placeholder={c.search}/></div>
+      <div className="audit-search"><Search/><input value={filters.search} onChange={(e)=>updateFilter("search",e.target.value)} placeholder={c.search} aria-label={c.search}/></div>
 	  <label className="audit-filter-field"><span>{language === "zh-CN" ? "邮箱账户" : "Account Email"}</span><input type="email" value={filters.email} onChange={(e)=>updateFilter("email",e.target.value)} placeholder="name@example.com"/></label>
       <AuditSelect label={c.type} value={filters.log_type} values={selectOptions("log_type")} all={c.all} onChange={(v)=>updateFilter("log_type",v)}/>
       <AuditSelect label={c.category} value={filters.category} values={selectOptions("category")} all={c.all} onChange={(v)=>updateFilter("category",v)}/>

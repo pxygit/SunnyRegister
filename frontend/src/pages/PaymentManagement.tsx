@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import {
-  Activity, BadgeDollarSign, CheckCircle2, CircleDollarSign, Clock3, CreditCard,
+  Activity, BadgeDollarSign, CheckCircle2, CircleAlert, CircleDollarSign, Clock3, CreditCard,
   KeyRound, LayoutDashboard, ListRestart, Loader2, MessageSquareText, Phone,
   Plus, RefreshCw, Search, Settings2, ShieldCheck, Smartphone, Trash2, UserRound,
   UsersRound, WalletCards, X,
@@ -10,6 +10,7 @@ import { apiFetch, cn } from "@/lib/utils";
 import { useI18n } from "@/lib/i18n-context";
 import DirectCardPayment from "@/pages/payments/DirectCardPayment";
 import MomoPayment from "@/pages/payments/MomoPayment";
+import "@/styles/module-polish.css";
 
 type Row = Record<string, any>;
 type GoPayView = "overview" | "register" | "pool" | "accounts" | "payment" | "settings";
@@ -130,22 +131,22 @@ export default function PaymentManagement() {
   ];
 
   return <div className="payment-management">
-    {notice && <div className={cn("gopay-toast", notice.type === "error" && "is-error")}><CheckCircle2 />{notice.text}</div>}
+    {notice && <div className={cn("gopay-toast", notice.type === "error" && "is-error")} role={notice.type === "error" ? "alert" : "status"}>{notice.type === "error" ? <CircleAlert /> : <CheckCircle2 />}{notice.text}</div>}
     <header className="payment-heading">
       <div><h1>{language === "en-US" ? "Payment Management" : "支付管理"}</h1><p>{language === "en-US" ? "Manage payment channels and their operational workflows." : "统一管理支付渠道与相关业务流程。"}</p></div>
       <Button variant="outline" onClick={() => void refreshAll(true)} disabled={loading || busy !== ""}><RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />刷新数据</Button>
     </header>
 
     <nav className="payment-method-tabs" aria-label="支付方式">
-      <button className={method === "gopay" ? "active" : ""} type="button" onClick={() => setMethod("gopay")}><span className="gopay-method-mark">Go</span><span><strong>GoPay 支付</strong><small>Indonesia</small></span></button>
-      <button className={method === "momo" ? "active" : ""} type="button" onClick={() => setMethod("momo")}><span className="momo-method-mark">M</span><span><strong>MOMO 支付</strong><small>Vietnam OAICS</small></span></button>
-      <button className={method === "paypal" ? "active" : ""} type="button" onClick={() => setMethod("paypal")}><CreditCard /><span><strong>PayPal 支付</strong><small>Billing Agreement</small></span></button>
-      <button className={method === "direct_card" ? "active" : ""} type="button" onClick={() => setMethod("direct_card")}><span className="direct-card-method-mark"><CreditCard /></span><span><strong>直卡协议</strong><small>Card Protocol</small></span></button>
+      <button className={method === "gopay" ? "active" : ""} type="button" aria-pressed={method === "gopay"} onClick={() => setMethod("gopay")}><span className="gopay-method-mark">Go</span><span><strong>GoPay 支付</strong><small>Indonesia</small></span></button>
+      <button className={method === "momo" ? "active" : ""} type="button" aria-pressed={method === "momo"} onClick={() => setMethod("momo")}><span className="momo-method-mark">M</span><span><strong>MOMO 支付</strong><small>Vietnam OAICS</small></span></button>
+      <button className={method === "paypal" ? "active" : ""} type="button" aria-pressed={method === "paypal"} onClick={() => setMethod("paypal")}><CreditCard /><span><strong>PayPal 支付</strong><small>Billing Agreement</small></span></button>
+      <button className={method === "direct_card" ? "active" : ""} type="button" aria-pressed={method === "direct_card"} onClick={() => setMethod("direct_card")}><span className="direct-card-method-mark"><CreditCard /></span><span><strong>直卡协议</strong><small>Card Protocol</small></span></button>
     </nav>
 
     <div className={cn("gopay-workspace", method !== "gopay" && "paypal-workspace")}>
       {method === "gopay" && <nav className="gopay-nav" aria-label="GoPay 功能">
-        {nav.map(([key, label, icon]) => <button key={key} type="button" className={view === key ? "active" : ""} onClick={() => setView(key)}>{icon}<span>{label}</span></button>)}
+        {nav.map(([key, label, icon]) => <button key={key} type="button" className={view === key ? "active" : ""} aria-pressed={view === key} onClick={() => setView(key)}>{icon}<span>{label}</span></button>)}
       </nav>}
       <main className="gopay-content">
         {method === "gopay" && <section className="gopay-summary" aria-label="GoPay 实时概览">
